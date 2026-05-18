@@ -3,7 +3,7 @@
 Sıfırdan geliştirilmiş, donanım seviyesi kontrol ve yerleşik siber güvenlik odaklı yenilikçi bir işletim sistemi çekirdeği (Kernel).
 
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
-![Version](https://img.shields.io/badge/Version-0.0.1--beta-orange.svg)
+![Version](https://img.shields.io/badge/Version-0.0.0--beta-orange.svg)
 ![Architecture](https://img.shields.io/badge/Architecture-x86__64-green.svg)
 
 **W Kernel**, modern işletim sistemi teorilerini güvenli bir mimariyle birleştiren, bellek yönetiminden ağ yığınına, gelişmiş grafik sürücülerinden donanımsal yapay zeka hızlandırmaya kadar geniş yeteneklere sahip bir projedir.
