@@ -8861,3 +8861,1693 @@ fn get_pci_device_name_ext(vendor_id: u16, device_id: u16) -> ptr<u8> {
     
     return "Generic Peripheral Component" as ptr<u8>;
 }
+
+struct CpuState {
+    ds: u16,
+    es: u16,
+    fs: u16,
+    gs: u16,
+    rax: u64,
+    rbx: u64,
+    rcx: u64,
+    rdx: u64,
+    rsi: u64,
+    rdi: u64,
+    rbp: u64,
+    r8: u64,
+    r9: u64,
+    r10: u64,
+    r11: u64,
+    r12: u64,
+    r13: u64,
+    r14: u64,
+    r15: u64,
+    int_num: u64,
+    error_code: u64,
+    rip: u64,
+    cs: u64,
+    rflags: u64,
+    rsp: u64,
+    ss: u64,
+}
+
+fn get_exception_name(vector: u64) -> ptr<u8> {
+    if vector == 0 { return "Divide By Zero Exception" as ptr<u8>; }
+    if vector == 1 { return "Debug Exception" as ptr<u8>; }
+    if vector == 2 { return "Non-maskable Interrupt" as ptr<u8>; }
+    if vector == 3 { return "Breakpoint Exception" as ptr<u8>; }
+    if vector == 4 { return "Overflow Exception" as ptr<u8>; }
+    if vector == 5 { return "Bound Range Exceeded" as ptr<u8>; }
+    if vector == 6 { return "Invalid Opcode" as ptr<u8>; }
+    if vector == 7 { return "Device Not Available" as ptr<u8>; }
+    if vector == 8 { return "Double Fault" as ptr<u8>; }
+    if vector == 9 { return "Coprocessor Segment Overrun" as ptr<u8>; }
+    if vector == 10 { return "Invalid TSS" as ptr<u8>; }
+    if vector == 11 { return "Segment Not Present" as ptr<u8>; }
+    if vector == 12 { return "Stack-Segment Fault" as ptr<u8>; }
+    if vector == 13 { return "General Protection Fault" as ptr<u8>; }
+    if vector == 14 { return "Page Fault" as ptr<u8>; }
+    if vector == 15 { return "Reserved" as ptr<u8>; }
+    if vector == 16 { return "x87 Floating-Point Exception" as ptr<u8>; }
+    if vector == 17 { return "Alignment Check" as ptr<u8>; }
+    if vector == 18 { return "Machine Check" as ptr<u8>; }
+    if vector == 19 { return "SIMD Floating-Point Exception" as ptr<u8>; }
+    if vector == 20 { return "Virtualization Exception" as ptr<u8>; }
+    if vector == 21 { return "Control Protection Exception" as ptr<u8>; }
+    if vector == 28 { return "Hypervisor Injection Exception" as ptr<u8>; }
+    if vector == 29 { return "VMM Communication Exception" as ptr<u8>; }
+    if vector == 30 { return "Security Exception" as ptr<u8>; }
+    return "Unknown Interrupt/Exception" as ptr<u8>;
+}
+
+fn render_panic_screen(state: ptr<CpuState>, cr2: u64, cr3: u64) {
+    panic_clear_screen(VGA_COLOR_WHITE_ON_RED);
+    
+    panic_print_separator(VGA_COLOR_WHITE_ON_RED);
+    panic_write_padded_string(" W KERNEL PANIC - CRITICAL SYSTEM HALT " as ptr<u8>, 80, VGA_COLOR_WHITE_ON_RED);
+    panic_print_separator(VGA_COLOR_WHITE_ON_RED);
+    
+    panic_print_string("\nEXCEPTION: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    let ext_name = get_exception_name((*state).int_num);
+    panic_print_string(ext_name, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string(" (" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).int_num, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string(")\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    panic_print_string("ERROR CODE: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).error_code, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("\n\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    panic_write_padded_string("--- CPU REGISTERS ---" as ptr<u8>, 80, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    panic_print_string("RAX: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).rax, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("  RBX: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).rbx, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    panic_print_string("RCX: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).rcx, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("  RDX: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).rdx, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    panic_print_string("RSI: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).rsi, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("  RDI: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).rdi, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    panic_print_string("RBP: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).rbp, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("  RSP: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).rsp, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    panic_print_string("R8 : " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).r8, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("  R9 : " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).r9, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    panic_print_string("R10: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).r10, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("  R11: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).r11, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    panic_print_string("R12: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).r12, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("  R13: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).r13, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    panic_print_string("R14: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).r14, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("  R15: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).r15, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("\n\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    panic_write_padded_string("--- CONTROL REGISTERS & SEGMENTS ---" as ptr<u8>, 80, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    panic_print_string("RIP: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).rip, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("  RFL: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).rflags, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    panic_print_string("CR2: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex(cr2, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("  CR3: " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex(cr3, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    panic_print_string("CS : " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).cs as u64, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("  SS : " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    panic_print_hex((*state).ss as u64, VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+}
+
+fn dump_stack_trace(rbp: u64, max_frames: u64) {
+    panic_print_string("\n--- STACK TRACE ---\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    let mut current_rbp = rbp;
+    let mut frame_count: u64 = 0;
+    
+    while current_rbp != 0 {
+        if frame_count >= max_frames {
+            break;
+        }
+        
+        let rip_ptr = (current_rbp + 8) as ptr<u64>;
+        let rip = *rip_ptr;
+        
+        if rip == 0 {
+            break;
+        }
+        
+        panic_print_string("  [" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+        panic_print_hex(frame_count, VGA_COLOR_WHITE_ON_RED);
+        panic_print_string("] " as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+        panic_print_hex(rip, VGA_COLOR_WHITE_ON_RED);
+        panic_print_string("\n" as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+        
+        let next_rbp_ptr = current_rbp as ptr<u64>;
+        current_rbp = *next_rbp_ptr;
+        frame_count = frame_count + 1;
+    }
+}
+
+fn kernel_panic_handler(state: ptr<CpuState>) {
+    let cr2_val: u64 = 0;
+    let cr3_val: u64 = 0;
+    
+    render_panic_screen(state, cr2_val, cr3_val);
+    dump_stack_trace((*state).rbp, 8);
+    
+    panic_print_separator(VGA_COLOR_WHITE_ON_RED);
+    panic_print_string("SYSTEM HALTED." as ptr<u8>, VGA_COLOR_WHITE_ON_RED);
+    
+    while true {}
+}
+
+struct IdtEntry {
+    base_low: u16,
+    sel: u16,
+    ist: u8,
+    flags: u8,
+    base_mid: u16,
+    base_high: u32,
+    reserved: u32,
+}
+
+struct IdtPtr {
+    limit: u16,
+    base: u64,
+}
+
+let mut idt: [IdtEntry; 256];
+let mut idtp: IdtPtr;
+
+fn idt_set_gate(num: u8, base: u64, sel: u16, flags: u8) {
+    let index = num as usize;
+    idt[index].base_low = (base & 0xFFFF) as u16;
+    idt[index].base_mid = ((base >> 16) & 0xFFFF) as u16;
+    idt[index].base_high = (base >> 32) as u32;
+    idt[index].sel = sel;
+    idt[index].ist = 0;
+    idt[index].flags = flags;
+    idt[index].reserved = 0;
+}
+
+fn idt_install() {
+    idtp.limit = (256 * 16) - 1;
+    idtp.base = &idt[0] as ptr<IdtEntry> as u64;
+
+    let mut i: u64 = 0;
+    while i < 256 {
+        idt_set_gate(i as u8, 0, 0x08, 0x8E);
+        i = i + 1;
+    }
+}
+
+fn fault_divide_error(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_debug(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_nmi(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_breakpoint(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_overflow(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_bounds(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_invalid_opcode(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_device_not_available(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_double_fault(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_coproc_segment_overrun(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_invalid_tss(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_segment_not_present(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_stack_fault(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_general_protection(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_page_fault(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_x87_fpu(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_alignment_check(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_machine_check(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_simd_fpu(state: ptr<CpuState>) { kernel_panic_handler(state); }
+fn fault_virtualization(state: ptr<CpuState>) { kernel_panic_handler(state); }
+
+struct Process {
+    pid: u64,
+    rsp: u64,
+    rip: u64,
+    cr3: u64,
+    state: u8,
+    time_slice: u64,
+}
+
+let mut process_table: [Process; 256];
+let mut current_pid: u64 = 0;
+let mut total_processes: u64 = 0;
+
+fn scheduler_init() {
+    let mut i: u64 = 0;
+    while i < 256 {
+        process_table[i as usize].pid = 0;
+        process_table[i as usize].state = 0;
+        i = i + 1;
+    }
+}
+
+fn process_create(entry_point: u64, stack_pointer: u64, page_dir: u64) -> u64 {
+    if total_processes >= 256 {
+        return 0;
+    }
+    
+    let pid = total_processes + 1;
+    let index = total_processes as usize;
+    
+    process_table[index].pid = pid;
+    process_table[index].rip = entry_point;
+    process_table[index].rsp = stack_pointer;
+    process_table[index].cr3 = page_dir;
+    process_table[index].state = 1;
+    process_table[index].time_slice = 15;
+    
+    total_processes = total_processes + 1;
+    return pid;
+}
+
+fn schedule_next(current_rsp: u64) -> u64 {
+    if total_processes == 0 {
+        return current_rsp;
+    }
+
+    if current_pid > 0 {
+        let curr_idx = (current_pid - 1) as usize;
+        process_table[curr_idx].rsp = current_rsp;
+        
+        if process_table[curr_idx].time_slice > 0 {
+            process_table[curr_idx].time_slice = process_table[curr_idx].time_slice - 1;
+            if process_table[curr_idx].time_slice > 0 {
+                return current_rsp;
+            }
+        }
+        process_table[curr_idx].time_slice = 15;
+    }
+
+    current_pid = current_pid + 1;
+    if current_pid > total_processes {
+        current_pid = 1;
+    }
+
+    let next_idx = (current_pid - 1) as usize;
+    return process_table[next_idx].rsp;
+}
+
+fn timer_phase(hz: u32) {
+    let divisor = 1193180 / hz;
+    outb(0x43, 0x36);
+    outb(0x40, (divisor & 0xFF) as u8);
+    outb(0x40, ((divisor >> 8) & 0xFF) as u8);
+}
+
+let mut timer_ticks: u64 = 0;
+
+fn timer_handler(state: ptr<CpuState>) -> u64 {
+    timer_ticks = timer_ticks + 1;
+    let next_rsp = schedule_next((*state).rsp);
+    outb(0x20, 0x20);
+    return next_rsp;
+}
+
+let mut memory_bitmap: [u64; 32768];
+let mut total_memory_pages: u64 = 0;
+let mut used_memory_pages: u64 = 0;
+
+fn set_bit(bitmap: ptr<u64>, index: u64) {
+    let array_index = index / 64;
+    let bit_index = index % 64;
+    let current = *(bitmap + array_index);
+    *(bitmap + array_index) = current | (1 << bit_index);
+}
+
+fn clear_bit(bitmap: ptr<u64>, index: u64) {
+    let array_index = index / 64;
+    let bit_index = index % 64;
+    let current = *(bitmap + array_index);
+    *(bitmap + array_index) = current & !(1 << bit_index);
+}
+
+fn test_bit(bitmap: ptr<u64>, index: u64) -> u64 {
+    let array_index = index / 64;
+    let bit_index = index % 64;
+    let current = *(bitmap + array_index);
+    if (current & (1 << bit_index)) != 0 {
+        return 1;
+    }
+    return 0;
+}
+
+fn pmm_init(mem_size_kb: u64) {
+    total_memory_pages = (mem_size_kb * 1024) / 4096;
+    used_memory_pages = 0;
+    let mut i: u64 = 0;
+    while i < 32768 {
+        memory_bitmap[i as usize] = 0;
+        i = i + 1;
+    }
+}
+
+fn pmm_alloc_page() -> u64 {
+    let mut i: u64 = 0;
+    while i < total_memory_pages {
+        if test_bit(&memory_bitmap[0] as ptr<u64>, i) == 0 {
+            set_bit(&memory_bitmap[0] as ptr<u64>, i);
+            used_memory_pages = used_memory_pages + 1;
+            return i * 4096;
+        }
+        i = i + 1;
+    }
+    return 0;
+}
+
+fn pmm_free_page(addr: u64) {
+    let page_index = addr / 4096;
+    clear_bit(&memory_bitmap[0] as ptr<u64>, page_index);
+    used_memory_pages = used_memory_pages - 1;
+}
+
+fn tlb_flush_single(addr: u64) {
+    asm {
+        "invlpg [%0]"
+        :
+        : "r" (addr)
+        : "memory"
+    }
+}
+
+fn tlb_flush_all() {
+    let mut cr3_val: u64 = 0;
+    asm {
+        "mov %0, cr3"
+        "mov cr3, %0"
+        : "=r" (cr3_val)
+        :
+        : "memory"
+    }
+}
+
+fn read_cr3() -> u64 {
+    let mut cr3_val: u64 = 0;
+    asm {
+        "mov %0, cr3"
+        : "=r" (cr3_val)
+    }
+    return cr3_val;
+}
+
+fn write_cr3(val: u64) {
+    asm {
+        "mov cr3, %0"
+        :
+        : "r" (val)
+        : "memory"
+    }
+}
+
+fn map_page(phys: u64, virt: u64, flags: u64) {
+    let pml4_index = (virt >> 39) & 0x1FF;
+    let pdpt_index = (virt >> 30) & 0x1FF;
+    let pd_index = (virt >> 21) & 0x1FF;
+    let pt_index = (virt >> 12) & 0x1FF;
+
+    let pml4 = read_cr3() as ptr<u64>;
+    let mut pdpt_entry = *(pml4 + pml4_index);
+    
+    if (pdpt_entry & 1) == 0 {
+        let new_pdpt = pmm_alloc_page();
+        *(pml4 + pml4_index) = new_pdpt | 3;
+        pdpt_entry = new_pdpt | 3;
+    }
+    
+    let pdpt = (pdpt_entry & 0xFFFFFFFFFFFFF000) as ptr<u64>;
+    let mut pd_entry = *(pdpt + pdpt_index);
+    
+    if (pd_entry & 1) == 0 {
+        let new_pd = pmm_alloc_page();
+        *(pdpt + pdpt_index) = new_pd | 3;
+        pd_entry = new_pd | 3;
+    }
+    
+    let pd = (pd_entry & 0xFFFFFFFFFFFFF000) as ptr<u64>;
+    let mut pt_entry = *(pd + pd_index);
+    
+    if (pt_entry & 1) == 0 {
+        let new_pt = pmm_alloc_page();
+        *(pd + pd_index) = new_pt | 3;
+        pt_entry = new_pt | 3;
+    }
+    
+    let pt = (pt_entry & 0xFFFFFFFFFFFFF000) as ptr<u64>;
+    *(pt + pt_index) = (phys & 0xFFFFFFFFFFFFF000) | (flags & 0xFFF) | 1;
+    
+    tlb_flush_single(virt);
+}
+
+fn unmap_page(virt: u64) {
+    let pml4_index = (virt >> 39) & 0x1FF;
+    let pdpt_index = (virt >> 30) & 0x1FF;
+    let pd_index = (virt >> 21) & 0x1FF;
+    let pt_index = (virt >> 12) & 0x1FF;
+
+    let pml4 = read_cr3() as ptr<u64>;
+    let pdpt_entry = *(pml4 + pml4_index);
+    
+    if (pdpt_entry & 1) == 0 { return; }
+    
+    let pdpt = (pdpt_entry & 0xFFFFFFFFFFFFF000) as ptr<u64>;
+    let pd_entry = *(pdpt + pdpt_index);
+    
+    if (pd_entry & 1) == 0 { return; }
+    
+    let pd = (pd_entry & 0xFFFFFFFFFFFFF000) as ptr<u64>;
+    let pt_entry = *(pd + pd_index);
+    
+    if (pt_entry & 1) == 0 { return; }
+    
+    let pt = (pt_entry & 0xFFFFFFFFFFFFF000) as ptr<u64>;
+    *(pt + pt_index) = 0;
+    
+    tlb_flush_single(virt);
+}
+
+struct HeapBlock {
+    size: u64,
+    free: u64,
+    next: u64,
+}
+
+let mut heap_start: u64 = 0;
+let mut heap_end: u64 = 0;
+let mut heap_head: u64 = 0;
+
+fn heap_init(start_addr: u64, initial_size: u64) {
+    heap_start = start_addr;
+    heap_end = start_addr + initial_size;
+    
+    let mut current_addr = heap_start;
+    while current_addr < heap_end {
+        let phys = pmm_alloc_page();
+        map_page(phys, current_addr, 3);
+        current_addr = current_addr + 4096;
+    }
+    
+    heap_head = heap_start;
+    let first_block = heap_head as ptr<HeapBlock>;
+    (*first_block).size = initial_size - 24;
+    (*first_block).free = 1;
+    (*first_block).next = 0;
+}
+
+fn kmalloc(size: u64) -> u64 {
+    let mut current = heap_head as ptr<HeapBlock>;
+    let mut best_fit = 0 as ptr<HeapBlock>;
+    
+    let mut aligned_size = size;
+    if (aligned_size % 8) != 0 {
+        aligned_size = aligned_size + (8 - (aligned_size % 8));
+    }
+    
+    while (current as u64) != 0 {
+        if (*current).free == 1 && (*current).size >= aligned_size {
+            if (best_fit as u64) == 0 {
+                best_fit = current;
+            } else {
+                if (*current).size < (*best_fit).size {
+                    best_fit = current;
+                }
+            }
+        }
+        current = (*current).next as ptr<HeapBlock>;
+    }
+    
+    if (best_fit as u64) != 0 {
+        let remaining_size = (*best_fit).size - aligned_size;
+        
+        if remaining_size > 32 {
+            let new_block_addr = (best_fit as u64) + 24 + aligned_size;
+            let new_block = new_block_addr as ptr<HeapBlock>;
+            (*new_block).size = remaining_size - 24;
+            (*new_block).free = 1;
+            (*new_block).next = (*best_fit).next;
+            
+            (*best_fit).size = aligned_size;
+            (*best_fit).next = new_block_addr;
+        }
+        
+        (*best_fit).free = 0;
+        return (best_fit as u64) + 24;
+    }
+    
+    return 0;
+}
+
+fn kfree(ptr: u64) {
+    if ptr == 0 { return; }
+    
+    let block_addr = ptr - 24;
+    let block = block_addr as ptr<HeapBlock>;
+    (*block).free = 1;
+    
+    let mut current = heap_head as ptr<HeapBlock>;
+    while (current as u64) != 0 {
+        if (*current).free == 1 {
+            let next_addr = (*current).next;
+            if next_addr != 0 {
+                let next_block = next_addr as ptr<HeapBlock>;
+                if (*next_block).free == 1 {
+                    (*current).size = (*current).size + 24 + (*next_block).size;
+                    (*current).next = (*next_block).next;
+                    continue;
+                }
+            }
+        }
+        current = (*current).next as ptr<HeapBlock>;
+    }
+}
+
+fn wrmsr(msr: u32, val: u64) {
+    let low = (val & 0xFFFFFFFF) as u32;
+    let high = (val >> 32) as u32;
+    asm {
+        "wrmsr"
+        :
+        : "c" (msr), "a" (low), "d" (high)
+        : "memory"
+    }
+}
+
+fn rdmsr(msr: u32) -> u64 {
+    let mut low: u32 = 0;
+    let mut high: u32 = 0;
+    asm {
+        "rdmsr"
+        : "=a" (low), "=d" (high)
+        : "c" (msr)
+    }
+    return ((high as u64) << 32) | (low as u64);
+}
+
+fn syscall_init() {
+    let star_val = (0x08 << 32) | (0x1B << 48);
+    wrmsr(0xC0000081, star_val);
+    
+    let lstar_val = syscall_handler_entry as u64;
+    wrmsr(0xC0000082, lstar_val);
+    
+    let fmask_val = 0x200;
+    wrmsr(0xC0000084, fmask_val);
+    
+    let efer = rdmsr(0xC0000080);
+    wrmsr(0xC0000080, efer | 1);
+}
+
+fn syscall_handler_entry() {
+    asm {
+        "swapgs"
+        "mov gs:[0], rsp"
+        "mov rsp, gs:[8]"
+        
+        "push rcx"
+        "push r11"
+        
+        "push rdi"
+        "push rsi"
+        "push rdx"
+        "push r10"
+        "push r8"
+        "push r9"
+        
+        "call syscall_dispatcher"
+        
+        "pop r9"
+        "pop r8"
+        "pop r10"
+        "pop rdx"
+        "pop rsi"
+        "pop rdi"
+        
+        "pop r11"
+        "pop rcx"
+        
+        "mov rsp, gs:[0]"
+        "swapgs"
+        "sysretq"
+    }
+}
+
+fn syscall_dispatcher(sys_num: u64, arg1: u64, arg2: u64, arg3: u64) -> u64 {
+    if sys_num == 1 {
+        return sys_write(arg1, arg2, arg3);
+    }
+    if sys_num == 2 {
+        return sys_read(arg1, arg2, arg3);
+    }
+    if sys_num == 3 {
+        return sys_exit(arg1);
+    }
+    if sys_num == 4 {
+        return sys_mmap(arg1, arg2);
+    }
+    return 0;
+}
+
+fn sys_write(fd: u64, buf: u64, count: u64) -> u64 {
+    if fd == 1 {
+        let mut i: u64 = 0;
+        let p = buf as ptr<u8>;
+        while i < count {
+            panic_put_char(*(p + i), 0x0F, panic_screen_cursor_x, panic_screen_cursor_y);
+            panic_screen_cursor_x = panic_screen_cursor_x + 1;
+            if panic_screen_cursor_x >= 80 {
+                panic_screen_cursor_x = 0;
+                panic_screen_cursor_y = panic_screen_cursor_y + 1;
+            }
+            i = i + 1;
+        }
+        return count;
+    }
+    return 0;
+}
+
+fn sys_read(fd: u64, buf: u64, count: u64) -> u64 {
+    return 0;
+}
+
+fn sys_exit(code: u64) -> u64 {
+    let curr_pid = current_pid;
+    let idx = (curr_pid - 1) as usize;
+    process_table[idx].state = 0;
+    while true { asm { "hlt" } }
+    return 0;
+}
+
+fn sys_mmap(addr: u64, len: u64) -> u64 {
+    let pages = len / 4096 + 1;
+    let mut i: u64 = 0;
+    while i < pages {
+        let phys = pmm_alloc_page();
+        map_page(phys, addr + (i * 4096), 7);
+        i = i + 1;
+    }
+    return addr;
+}
+
+fn switch_to_user_mode(entry_point: u64, user_stack: u64) {
+    asm {
+        "cli"
+        "mov ax, 0x23"
+        "mov ds, ax"
+        "mov es, ax"
+        "mov fs, ax"
+        "mov gs, ax"
+        
+        "push 0x23"
+        "push %1"
+        
+        "push 0x202"
+        
+        "push 0x1B"
+        "push %0"
+        
+        "iretq"
+        :
+        : "r" (entry_point), "r" (user_stack)
+        : "memory"
+    }
+}
+
+fn init_user_process(code_ptr: u64, code_size: u64) {
+    let user_stack_virt = 0x00007FFFFFFFF000;
+    let stack_phys = pmm_alloc_page();
+    map_page(stack_phys, user_stack_virt, 7);
+    
+    let user_code_virt = 0x0000000000400000;
+    let code_phys = pmm_alloc_page();
+    map_page(code_phys, user_code_virt, 7);
+    
+    let dest = user_code_virt as ptr<u8>;
+    let src = code_ptr as ptr<u8>;
+    let mut i: u64 = 0;
+    while i < code_size {
+        *(dest + i) = *(src + i);
+        i = i + 1;
+    }
+    
+    switch_to_user_mode(user_code_virt, user_stack_virt + 4096);
+}
+
+fn cpuid(leaf: u32, eax: ptr<u32>, ebx: ptr<u32>, ecx: ptr<u32>, edx: ptr<u32>) {
+    let mut a: u32 = 0;
+    let mut b: u32 = 0;
+    let mut c: u32 = 0;
+    let mut d: u32 = 0;
+    asm {
+        "cpuid"
+        : "=a" (a), "=b" (b), "=c" (c), "=d" (d)
+        : "a" (leaf)
+    }
+    *eax = a;
+    *ebx = b;
+    *ecx = c;
+    *edx = d;
+}
+
+fn inb(port: u16) -> u8 {
+    let mut ret: u8 = 0;
+    asm {
+        "in al, dx"
+        : "=a" (ret)
+        : "d" (port)
+    }
+    return ret;
+}
+
+fn io_wait() {
+    outb(0x80, 0);
+}
+
+fn pic_remap(offset1: u8, offset2: u8) {
+    let a1 = inb(0x21);
+    let a2 = inb(0xA1);
+    
+    outb(0x20, 0x11);
+    io_wait();
+    outb(0xA0, 0x11);
+    io_wait();
+    
+    outb(0x21, offset1);
+    io_wait();
+    outb(0xA1, offset2);
+    io_wait();
+    
+    outb(0x21, 4);
+    io_wait();
+    outb(0xA1, 2);
+    io_wait();
+    
+    outb(0x21, 0x01);
+    io_wait();
+    outb(0xA1, 0x01);
+    io_wait();
+    
+    outb(0x21, a1);
+    outb(0xA1, a2);
+}
+
+fn outl(port: u16, data: u32) {
+    asm {
+        "out dx, eax"
+        :
+        : "a" (data), "d" (port)
+    }
+}
+
+fn inl(port: u16) -> u32 {
+    let mut ret: u32 = 0;
+    asm {
+        "in eax, dx"
+        : "=a" (ret)
+        : "d" (port)
+    }
+    return ret;
+}
+
+fn outw(port: u16, data: u16) {
+    asm {
+        "out dx, ax"
+        :
+        : "a" (data), "d" (port)
+    }
+}
+
+fn pci_config_read_word(bus: u8, slot: u8, func: u8, offset: u8) -> u16 {
+    let lbus = bus as u32;
+    let lslot = slot as u32;
+    let lfunc = func as u32;
+    let tmp = 0x80000000 | (lbus << 16) | (lslot << 11) | (lfunc << 8) | ((offset as u32) & 0xFC);
+    outl(0xCF8, tmp);
+    let shift = ((offset & 2) * 8) as u32;
+    let read_val = inl(0xCFC);
+    return ((read_val >> shift) & 0xFFFF) as u16;
+}
+
+fn pci_config_read_dword(bus: u8, slot: u8, func: u8, offset: u8) -> u32 {
+    let lbus = bus as u32;
+    let lslot = slot as u32;
+    let lfunc = func as u32;
+    let tmp = 0x80000000 | (lbus << 16) | (lslot << 11) | (lfunc << 8) | ((offset as u32) & 0xFC);
+    outl(0xCF8, tmp);
+    return inl(0xCFC);
+}
+
+fn pci_check_vendor(bus: u8, slot: u8) -> u16 {
+    return pci_config_read_word(bus, slot, 0, 0);
+}
+
+struct PciDevice {
+    bus: u8,
+    slot: u8,
+    func: u8,
+    vendor_id: u16,
+    device_id: u16,
+    class_id: u8,
+    subclass_id: u8,
+    prog_if: u8,
+    rev_id: u8,
+    bar0: u32,
+    bar1: u32,
+    bar2: u32,
+    bar3: u32,
+    bar4: u32,
+    bar5: u32,
+}
+
+let mut pci_device_list: [PciDevice; 256];
+let mut pci_device_count: u64 = 0;
+
+fn pci_add_device(bus: u8, slot: u8, func: u8) {
+    if pci_device_count >= 256 { return; }
+    let vendor = pci_config_read_word(bus, slot, func, 0);
+    if vendor == 0xFFFF { return; }
+
+    let device = pci_config_read_word(bus, slot, func, 2);
+    let class_word = pci_config_read_word(bus, slot, func, 0x0A);
+    let class_id = (class_word >> 8) as u8;
+    let subclass_id = (class_word & 0xFF) as u8;
+    
+    let prog_word = pci_config_read_word(bus, slot, func, 0x08);
+    let prog_if = (prog_word >> 8) as u8;
+    let rev_id = (prog_word & 0xFF) as u8;
+
+    let b0 = pci_config_read_dword(bus, slot, func, 0x10);
+    let b1 = pci_config_read_dword(bus, slot, func, 0x14);
+    let b2 = pci_config_read_dword(bus, slot, func, 0x18);
+    let b3 = pci_config_read_dword(bus, slot, func, 0x1C);
+    let b4 = pci_config_read_dword(bus, slot, func, 0x20);
+    let b5 = pci_config_read_dword(bus, slot, func, 0x24);
+
+    let idx = pci_device_count as usize;
+    pci_device_list[idx].bus = bus;
+    pci_device_list[idx].slot = slot;
+    pci_device_list[idx].func = func;
+    pci_device_list[idx].vendor_id = vendor;
+    pci_device_list[idx].device_id = device;
+    pci_device_list[idx].class_id = class_id;
+    pci_device_list[idx].subclass_id = subclass_id;
+    pci_device_list[idx].prog_if = prog_if;
+    pci_device_list[idx].rev_id = rev_id;
+    pci_device_list[idx].bar0 = b0;
+    pci_device_list[idx].bar1 = b1;
+    pci_device_list[idx].bar2 = b2;
+    pci_device_list[idx].bar3 = b3;
+    pci_device_list[idx].bar4 = b4;
+    pci_device_list[idx].bar5 = b5;
+
+    pci_device_count = pci_device_count + 1;
+}
+
+fn pci_scan_bus() {
+    let mut bus: u64 = 0;
+    while bus < 256 {
+        let mut slot: u64 = 0;
+        while slot < 32 {
+            let vendor = pci_check_vendor(bus as u8, slot as u8);
+            if vendor != 0xFFFF {
+                let mut func: u64 = 0;
+                while func < 8 {
+                    let f_vendor = pci_config_read_word(bus as u8, slot as u8, func as u8, 0);
+                    if f_vendor != 0xFFFF {
+                        pci_add_device(bus as u8, slot as u8, func as u8);
+                    }
+                    func = func + 1;
+                }
+            }
+            slot = slot + 1;
+        }
+        bus = bus + 1;
+    }
+}
+
+struct VfsNode {
+    name: [u8; 64],
+    inode: u64,
+    size: u64,
+    flags: u32,
+    uid: u32,
+    gid: u32,
+    read_ptr: u64,
+    write_ptr: u64,
+    open_ptr: u64,
+    close_ptr: u64,
+    read_dir_ptr: u64,
+    find_dir_ptr: u64,
+    parent: u64,
+    sibling: u64,
+    child: u64,
+}
+
+let mut vfs_nodes: [VfsNode; 1024];
+let mut vfs_node_count: u64 = 0;
+let mut vfs_root: u64 = 0;
+
+fn vfs_init() {
+    vfs_node_count = 1;
+    vfs_root = 0;
+    let root_idx = vfs_root as usize;
+    vfs_nodes[root_idx].name[0] = 47;
+    vfs_nodes[root_idx].name[1] = 0;
+    vfs_nodes[root_idx].inode = 0;
+    vfs_nodes[root_idx].size = 0;
+    vfs_nodes[root_idx].flags = 2;
+    vfs_nodes[root_idx].parent = 0;
+    vfs_nodes[root_idx].sibling = 0;
+    vfs_nodes[root_idx].child = 0;
+}
+
+fn strcmp(s1: ptr<u8>, s2: ptr<u8>) -> u64 {
+    let mut i: u64 = 0;
+    while *(s1 + i) != 0 && *(s2 + i) != 0 {
+        if *(s1 + i) != *(s2 + i) {
+            return 1;
+        }
+        i = i + 1;
+    }
+    if *(s1 + i) != *(s2 + i) {
+        return 1;
+    }
+    return 0;
+}
+
+fn strcpy(dest: ptr<u8>, src: ptr<u8>) {
+    let mut i: u64 = 0;
+    while *(src + i) != 0 {
+        *(dest + i) = *(src + i);
+        i = i + 1;
+    }
+    *(dest + i) = 0;
+}
+
+fn vfs_create_file(parent_idx: u64, name: ptr<u8>, is_dir: u8) -> u64 {
+    if vfs_node_count >= 1024 { return 0xFFFFFFFF; }
+    
+    let new_idx = vfs_node_count;
+    let n_idx = new_idx as usize;
+    let p_idx = parent_idx as usize;
+    
+    strcpy(&vfs_nodes[n_idx].name[0] as ptr<u8>, name);
+    vfs_nodes[n_idx].inode = new_idx;
+    vfs_nodes[n_idx].size = 0;
+    if is_dir == 1 {
+        vfs_nodes[n_idx].flags = 2;
+    } else {
+        vfs_nodes[n_idx].flags = 1;
+    }
+    vfs_nodes[n_idx].parent = parent_idx;
+    vfs_nodes[n_idx].sibling = vfs_nodes[p_idx].child;
+    vfs_nodes[n_idx].child = 0;
+    
+    vfs_nodes[p_idx].child = new_idx;
+    vfs_node_count = vfs_node_count + 1;
+    
+    return new_idx;
+}
+
+fn vfs_find_child(parent_idx: u64, name: ptr<u8>) -> u64 {
+    let p_idx = parent_idx as usize;
+    let mut curr_idx = vfs_nodes[p_idx].child;
+    
+    while curr_idx != 0 {
+        let c_idx = curr_idx as usize;
+        if strcmp(&vfs_nodes[c_idx].name[0] as ptr<u8>, name) == 0 {
+            return curr_idx;
+        }
+        curr_idx = vfs_nodes[c_idx].sibling;
+    }
+    return 0xFFFFFFFF;
+}
+
+struct FileDescriptor {
+    node_idx: u64,
+    offset: u64,
+    flags: u32,
+    used: u8,
+}
+
+let mut fd_table: [FileDescriptor; 256];
+
+fn fd_init() {
+    let mut i: u64 = 0;
+    while i < 256 {
+        fd_table[i as usize].used = 0;
+        i = i + 1;
+    }
+}
+
+fn sys_open(path: ptr<u8>, flags: u32) -> u64 {
+    let mut i: u64 = 0;
+    let mut fd_idx: u64 = 0xFFFFFFFF;
+    while i < 256 {
+        if fd_table[i as usize].used == 0 {
+            fd_idx = i;
+            break;
+        }
+        i = i + 1;
+    }
+    if fd_idx == 0xFFFFFFFF { return 0xFFFFFFFF; }
+    
+    let node_idx = vfs_find_child(vfs_root, path);
+    if node_idx == 0xFFFFFFFF {
+        if (flags & 0x40) != 0 {
+            let new_node = vfs_create_file(vfs_root, path, 0);
+            if new_node == 0xFFFFFFFF { return 0xFFFFFFFF; }
+            fd_table[fd_idx as usize].node_idx = new_node;
+            fd_table[fd_idx as usize].offset = 0;
+            fd_table[fd_idx as usize].flags = flags;
+            fd_table[fd_idx as usize].used = 1;
+            return fd_idx;
+        }
+        return 0xFFFFFFFF;
+    }
+    
+    fd_table[fd_idx as usize].node_idx = node_idx;
+    fd_table[fd_idx as usize].offset = 0;
+    fd_table[fd_idx as usize].flags = flags;
+    fd_table[fd_idx as usize].used = 1;
+    return fd_idx;
+}
+
+struct AhciHbaPort {
+    clb: u32,
+    clbu: u32,
+    fb: u32,
+    fbu: u32,
+    is: u32,
+    ie: u32,
+    cmd: u32,
+    rsv0: u32,
+    tfd: u32,
+    sig: u32,
+    ssts: u32,
+    sctl: u32,
+    serr: u32,
+    sact: u32,
+    ci: u32,
+    sntf: u32,
+    fbs: u32,
+    rsv1: [u32; 11],
+    vendor: [u32; 4],
+}
+
+struct AhciHbaMem {
+    cap: u32,
+    ghc: u32,
+    is: u32,
+    pi: u32,
+    vs: u32,
+    ccc_ctl: u32,
+    ccc_pts: u32,
+    em_loc: u32,
+    em_ctl: u32,
+    cap2: u32,
+    bohc: u32,
+    rsv: [u8; 116],
+    vendor: [u8; 96],
+    ports: [AhciHbaPort; 32],
+}
+
+fn ahci_check_type(port: ptr<AhciHbaPort>) -> u32 {
+    let ssts = (*port).ssts;
+    let ipm = (ssts >> 8) & 0x0F;
+    let det = ssts & 0x0F;
+    if det != 3 { return 0; }
+    if ipm != 1 { return 0; }
+    let sig = (*port).sig;
+    if sig == 0x00000101 { return 1; }
+    if sig == 0xEB140101 { return 2; }
+    if sig == 0x96690101 { return 3; }
+    if sig == 0xC33C0101 { return 4; }
+    return 0;
+}
+
+let mut ahci_base_address: u64 = 0;
+
+fn ahci_init(pci_bus: u8, pci_slot: u8, pci_func: u8) {
+    let bar5_val = pci_config_read_dword(pci_bus, pci_slot, pci_func, 0x24);
+    ahci_base_address = (bar5_val & 0xFFFFFFF0) as u64;
+    let hba = ahci_base_address as ptr<AhciHbaMem>;
+    let pi = (*hba).pi;
+    let mut i: u32 = 0;
+    while i < 32 {
+        if (pi & (1 << i)) != 0 {
+            let port_ptr = &(*hba).ports[i as usize] as ptr<AhciHbaPort>;
+            let ptype = ahci_check_type(port_ptr);
+        }
+        i = i + 1;
+    }
+}
+
+fn rtl8139_init(bus: u8, slot: u8, func: u8) {
+    let bar0 = pci_config_read_dword(bus, slot, func, 0x10);
+    let io_base = (bar0 & 0xFFFFFFFC) as u16;
+    outb(io_base + 0x52, 0x00);
+    outb(io_base + 0x37, 0x10);
+    let mut i: u16 = 0;
+    while i < 1000 {
+        if (inb(io_base + 0x37) & 0x10) == 0 {
+            break;
+        }
+        i = i + 1;
+    }
+    let rx_buffer = pmm_alloc_page();
+    let rx_buffer_phys = rx_buffer & 0xFFFFFFFF;
+    outl(io_base + 0x30, rx_buffer_phys as u32);
+    outw(io_base + 0x3C, 0x0005);
+    outl(io_base + 0x44, 0x0000000F | 0x00000080);
+    outb(io_base + 0x37, 0x0C);
+}
+
+fn pci_driver_match() {
+    let mut i: u64 = 0;
+    while i < pci_device_count {
+        let dev = &pci_device_list[i as usize] as ptr<PciDevice>;
+        if (*dev).class_id == 0x01 && (*dev).subclass_id == 0x06 {
+            if (*dev).prog_if == 0x01 {
+                ahci_init((*dev).bus, (*dev).slot, (*dev).func);
+            }
+        }
+        if (*dev).vendor_id == 0x10EC && (*dev).device_id == 0x8139 {
+            rtl8139_init((*dev).bus, (*dev).slot, (*dev).func);
+        }
+        i = i + 1;
+    }
+}
+
+let keymap_lower: [u8; 128] = [
+    0, 27, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 8,
+    9, 113, 119, 101, 114, 116, 121, 117, 105, 111, 112, 91, 93, 10,
+    0, 97, 115, 100, 102, 103, 104, 106, 107, 108, 59, 39, 96,
+    0, 92, 122, 120, 99, 118, 98, 110, 109, 44, 46, 47, 0,
+    42, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 45, 0, 0, 0, 43, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+];
+
+let keymap_upper: [u8; 128] = [
+    0, 27, 33, 64, 35, 36, 37, 94, 38, 42, 40, 41, 95, 43, 8,
+    9, 81, 87, 69, 82, 84, 89, 85, 73, 79, 80, 123, 125, 10,
+    0, 65, 83, 68, 70, 71, 72, 74, 75, 76, 58, 34, 126,
+    0, 124, 90, 88, 67, 86, 66, 78, 77, 60, 62, 63, 0,
+    42, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 45, 0, 0, 0, 43, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+];
+
+let mut kbd_shift_active: u8 = 0;
+let mut kbd_caps_active: u8 = 0;
+
+let mut shell_buffer: [u8; 256];
+let mut shell_idx: u64 = 0;
+let mut shell_active: u8 = 0;
+
+fn kbd_init() {
+    let mut status = inb(0x64);
+    while (status & 2) != 0 {
+        status = inb(0x64);
+    }
+    outb(0x64, 0xAD);
+    outb(0x64, 0xA7);
+    let temp = inb(0x60);
+    outb(0x64, 0xAE);
+}
+
+fn kbd_handler(state: ptr<CpuState>) {
+    let status = inb(0x64);
+    if (status & 1) != 0 {
+        let scancode = inb(0x60);
+        
+        if scancode == 0x2A || scancode == 0x36 {
+            kbd_shift_active = 1;
+        } else if scancode == 0xAA || scancode == 0xB6 {
+            kbd_shift_active = 0;
+        } else if scancode == 0x3A {
+            if kbd_caps_active == 0 {
+                kbd_caps_active = 1;
+            } else {
+                kbd_caps_active = 0;
+            }
+        } else if (scancode & 0x80) == 0 {
+            let mut ascii: u8 = 0;
+            let mut use_upper = kbd_shift_active;
+            
+            if kbd_caps_active == 1 {
+                let base_char = keymap_lower[scancode as usize];
+                if base_char >= 97 && base_char <= 122 {
+                    if kbd_shift_active == 1 {
+                        use_upper = 0;
+                    } else {
+                        use_upper = 1;
+                    }
+                }
+            }
+            
+            if use_upper == 1 {
+                ascii = keymap_upper[scancode as usize];
+            } else {
+                ascii = keymap_lower[scancode as usize];
+            }
+            
+            if ascii != 0 && shell_active == 1 {
+                shell_process_key(ascii);
+            }
+        }
+    }
+    outb(0x20, 0x20);
+}
+
+fn shell_print_prompt() {
+    panic_print_string("root@w-os # " as ptr<u8>, 0x0A);
+}
+
+fn shell_init() {
+    shell_idx = 0;
+    shell_active = 1;
+    let mut i: u64 = 0;
+    while i < 256 {
+        shell_buffer[i as usize] = 0;
+        i = i + 1;
+    }
+    panic_clear_screen(0x0F);
+    panic_print_string("W Operating System - Core Shell\n" as ptr<u8>, 0x0B);
+    panic_print_string("Type 'help' for a list of commands.\n\n" as ptr<u8>, 0x07);
+    shell_print_prompt();
+}
+
+fn shell_execute() {
+    panic_print_string("\n" as ptr<u8>, 0x07);
+    if shell_idx == 0 {
+        shell_print_prompt();
+        return;
+    }
+    
+    shell_buffer[shell_idx as usize] = 0;
+    let cmd_ptr = &shell_buffer[0] as ptr<u8>;
+    
+    if strcmp(cmd_ptr, "help" as ptr<u8>) == 0 {
+        panic_print_string("Available commands:\n" as ptr<u8>, 0x0F);
+        panic_print_string("  help   - Show this message\n" as ptr<u8>, 0x07);
+        panic_print_string("  clear  - Clear the screen\n" as ptr<u8>, 0x07);
+        panic_print_string("  uname  - Show system information\n" as ptr<u8>, 0x07);
+        panic_print_string("  lspci  - List PCI devices\n" as ptr<u8>, 0x07);
+    } else if strcmp(cmd_ptr, "clear" as ptr<u8>) == 0 {
+        panic_clear_screen(0x0F);
+    } else if strcmp(cmd_ptr, "uname" as ptr<u8>) == 0 {
+        panic_print_string("W Kernel 0.0.1 beta - x86_64\n" as ptr<u8>, 0x0E);
+    } else if strcmp(cmd_ptr, "lspci" as ptr<u8>) == 0 {
+        let mut i: u64 = 0;
+        while i < pci_device_count {
+            let dev = &pci_device_list[i as usize] as ptr<PciDevice>;
+            panic_print_string("Bus " as ptr<u8>, 0x07);
+            panic_print_hex((*dev).bus as u64, 0x07);
+            panic_print_string(" Slot " as ptr<u8>, 0x07);
+            panic_print_hex((*dev).slot as u64, 0x07);
+            panic_print_string(" - Vendor: " as ptr<u8>, 0x07);
+            panic_print_hex((*dev).vendor_id as u64, 0x0A);
+            panic_print_string(" Device: " as ptr<u8>, 0x07);
+            panic_print_hex((*dev).device_id as u64, 0x0B);
+            panic_print_string("\n" as ptr<u8>, 0x07);
+            i = i + 1;
+        }
+    } else {
+        panic_print_string("Unknown command: " as ptr<u8>, 0x0C);
+        panic_print_string(cmd_ptr, 0x0C);
+        panic_print_string("\n" as ptr<u8>, 0x07);
+    }
+    
+    shell_idx = 0;
+    shell_print_prompt();
+}
+
+fn shell_process_key(c: u8) {
+    if c == 10 {
+        shell_execute();
+    } else if c == 8 {
+        if shell_idx > 0 {
+            shell_idx = shell_idx - 1;
+            shell_buffer[shell_idx as usize] = 0;
+            if panic_screen_cursor_x > 0 {
+                panic_screen_cursor_x = panic_screen_cursor_x - 1;
+            } else if panic_screen_cursor_y > 0 {
+                panic_screen_cursor_y = panic_screen_cursor_y - 1;
+                panic_screen_cursor_x = 79;
+            }
+            panic_put_char(32, 0x0F, panic_screen_cursor_x, panic_screen_cursor_y);
+        }
+    } else {
+        if shell_idx < 255 {
+            shell_buffer[shell_idx as usize] = c;
+            shell_idx = shell_idx + 1;
+            let mut color_code: u8 = 0x0F;
+            panic_put_char(c, color_code, panic_screen_cursor_x, panic_screen_cursor_y);
+            panic_screen_cursor_x = panic_screen_cursor_x + 1;
+            if panic_screen_cursor_x >= 80 {
+                panic_screen_cursor_x = 0;
+                panic_screen_cursor_y = panic_screen_cursor_y + 1;
+                if panic_screen_cursor_y >= 25 {
+                    panic_screen_cursor_y = 24;
+                }
+            }
+        }
+    }
+}
+
+struct BootSectorFat32 {
+    jmp: [u8; 3],
+    oem_name: [u8; 8],
+    bytes_per_sector: u16,
+    sectors_per_cluster: u8,
+    reserved_sectors: u16,
+    fat_count: u8,
+    root_dir_entries: u16,
+    total_sectors_16: u16,
+    media_descriptor: u8,
+    sectors_per_fat_16: u16,
+    sectors_per_track: u16,
+    head_count: u16,
+    hidden_sectors: u32,
+    total_sectors_32: u32,
+    sectors_per_fat_32: u32,
+    ext_flags: u16,
+    fs_version: u16,
+    root_cluster: u32,
+    fs_info_sector: u16,
+    backup_boot_sector: u16,
+    reserved: [u8; 12],
+    drive_number: u8,
+    reserved1: u8,
+    boot_signature: u8,
+    volume_id: u32,
+    volume_label: [u8; 11],
+    fs_type: [u8; 8],
+}
+
+struct Fat32DirEntry {
+    name: [u8; 11],
+    attr: u8,
+    nt_res: u8,
+    crt_time_tenth: u8,
+    crt_time: u16,
+    crt_date: u16,
+    last_access_date: u16,
+    cluster_high: u16,
+    write_time: u16,
+    write_date: u16,
+    cluster_low: u16,
+    file_size: u32,
+}
+
+let mut fat32_lba_start: u32 = 0;
+let mut fat32_root_cluster: u32 = 0;
+let mut fat32_sectors_per_cluster: u32 = 0;
+let mut fat32_bytes_per_cluster: u32 = 0;
+let mut fat32_fat_start: u32 = 0;
+let mut fat32_data_start: u32 = 0;
+
+fn fat32_init(lba: u32, buffer: ptr<u8>) {
+    let bs = buffer as ptr<BootSectorFat32>;
+    fat32_lba_start = lba;
+    fat32_sectors_per_cluster = (*bs).sectors_per_cluster as u32;
+    fat32_bytes_per_cluster = fat32_sectors_per_cluster * ((*bs).bytes_per_sector as u32);
+    fat32_fat_start = lba + ((*bs).reserved_sectors as u32);
+    let fat_size = (*bs).sectors_per_fat_32;
+    let fat_count = (*bs).fat_count as u32;
+    fat32_data_start = fat32_fat_start + (fat_size * fat_count);
+    fat32_root_cluster = (*bs).root_cluster;
+}
+
+fn fat32_cluster_to_lba(cluster: u32) -> u32 {
+    if cluster < 2 { return 0; }
+    return fat32_data_start + ((cluster - 2) * fat32_sectors_per_cluster);
+}
+
+fn fat32_compare_name(entry_name: ptr<u8>, target: ptr<u8>) -> u32 {
+    let mut i: u64 = 0;
+    while i < 11 {
+        if *(target + i) == 0 {
+            if *(entry_name + i) == 32 {
+                let mut j = i;
+                let mut all_space = 1;
+                while j < 11 {
+                    if *(entry_name + j) != 32 {
+                        all_space = 0;
+                        break;
+                    }
+                    j = j + 1;
+                }
+                if all_space == 1 { return 1; }
+            }
+            return 0;
+        }
+        if *(entry_name + i) != *(target + i) {
+            return 0;
+        }
+        i = i + 1;
+    }
+    if *(target + 11) == 0 { return 1; }
+    return 0;
+}
+
+struct WefHeader {
+    magic: u32,
+    arch: u8,
+    os_abi: u8,
+    type_id: u16,
+    machine: u16,
+    version: u32,
+    entry: u64,
+    ph_off: u64,
+    sh_off: u64,
+    flags: u32,
+    eh_size: u16,
+    ph_ent_size: u16,
+    ph_num: u16,
+    sh_ent_size: u16,
+    sh_num: u16,
+    sh_str_ndx: u16,
+}
+
+struct WefProgramHeader {
+    type_id: u32,
+    flags: u32,
+    offset: u64,
+    vaddr: u64,
+    paddr: u64,
+    filesz: u64,
+    memsz: u64,
+    align: u64,
+}
+
+fn wef_check_magic(header: ptr<WefHeader>) -> u32 {
+    let m = (*header).magic;
+    if m == 0x4645577F {
+        return 1;
+    }
+    return 0;
+}
+
+fn sys_yield() {
+    asm {
+        "int 0x20"
+    }
+}
+
+fn sys_wait_pid(pid: u64) {
+    let mut status: u8 = 1;
+    while status == 1 {
+        let mut i: u64 = 0;
+        let mut found = 0;
+        while i < 256 {
+            if process_table[i as usize].pid == pid {
+                status = process_table[i as usize].state;
+                found = 1;
+                break;
+            }
+            i = i + 1;
+        }
+        if found == 0 { break; }
+        sys_yield();
+    }
+}
+
+fn wef_load_segment(ph: ptr<WefProgramHeader>, file_base: u64, cr3_val: u64) {
+    if (*ph).type_id != 1 { return; }
+    if (*ph).memsz == 0 { return; }
+
+    let vaddr_start = (*ph).vaddr;
+    let memsz = (*ph).memsz;
+    let filesz = (*ph).filesz;
+    let offset = (*ph).offset;
+
+    let page_count = (memsz + 4095) / 4096;
+    let mut i: u64 = 0;
+    
+    let current_cr3 = read_cr3();
+    write_cr3(cr3_val);
+
+    while i < page_count {
+        let phys_page = pmm_alloc_page();
+        let virt_page = (vaddr_start & 0xFFFFFFFFFFFFF000) + (i * 4096);
+        let mut flags: u64 = 5;
+        if ((*ph).flags & 2) != 0 {
+            flags = flags | 2;
+        }
+        map_page(phys_page, virt_page, flags);
+        i = i + 1;
+    }
+
+    let dest = vaddr_start as ptr<u8>;
+    let src = (file_base + offset) as ptr<u8>;
+    
+    let mut j: u64 = 0;
+    while j < filesz {
+        *(dest + j) = *(src + j);
+        j = j + 1;
+    }
+    
+    while j < memsz {
+        *(dest + j) = 0;
+        j = j + 1;
+    }
+    
+    write_cr3(current_cr3);
+}
+
+fn process_exec_wef(file_buffer: u64) -> u64 {
+    let header = file_buffer as ptr<WefHeader>;
+    if wef_check_magic(header) == 0 {
+        return 0;
+    }
+
+    let pml4_phys = pmm_alloc_page();
+    
+    let kernel_pml4 = read_cr3() as ptr<u64>;
+    let new_pml4 = pml4_phys as ptr<u64>;
+    
+    let mut idx: u64 = 256;
+    while idx < 512 {
+        *(new_pml4 + idx) = *(kernel_pml4 + idx);
+        idx = idx + 1;
+    }
+    
+    let ph_base = file_buffer + (*header).ph_off;
+    let ph_count = (*header).ph_num as u64;
+    let ph_size = (*header).ph_ent_size as u64;
+    
+    let mut i: u64 = 0;
+    while i < ph_count {
+        let ph_ptr = (ph_base + (i * ph_size)) as ptr<WefProgramHeader>;
+        wef_load_segment(ph_ptr, file_buffer, pml4_phys);
+        i = i + 1;
+    }
+    
+    let user_stack_virt = 0x00007FFFFFFFF000;
+    let stack_phys = pmm_alloc_page();
+    
+    let current_cr3 = read_cr3();
+    write_cr3(pml4_phys);
+    map_page(stack_phys, user_stack_virt, 7);
+    write_cr3(current_cr3);
+    
+    let entry_point = (*header).entry;
+    let new_pid = process_create(entry_point, user_stack_virt + 4096, pml4_phys);
+    
+    return new_pid;
+}
+
+fn sys_exec(path_ptr: u64) -> u64 {
+    return 0;
+}
+
+fn sys_fork() -> u64 {
+    let curr_pid = current_pid;
+    if curr_pid == 0 { return 0; }
+    
+    let parent_idx = (curr_pid - 1) as usize;
+    let parent_cr3 = process_table[parent_idx].cr3;
+    
+    let child_cr3 = pmm_alloc_page();
+    let p_pml4 = parent_cr3 as ptr<u64>;
+    let c_pml4 = child_cr3 as ptr<u64>;
+    
+    let mut i: u64 = 256;
+    while i < 512 {
+        *(c_pml4 + i) = *(p_pml4 + i);
+        i = i + 1;
+    }
+    
+    let child_pid = process_create(
+        process_table[parent_idx].rip,
+        process_table[parent_idx].rsp,
+        child_cr3
+    );
+    
+    return child_pid;
+}
+
+fn kthread_create(entry: u64, stack_size: u64) -> u64 {
+    let stack_base = kmalloc(stack_size);
+    let stack_top = stack_base + stack_size;
+    let cr3 = read_cr3();
+    
+    let pid = process_create(entry, stack_top, cr3);
+    let idx = (pid - 1) as usize;
+    process_table[idx].state = 2;
+    
+    return pid;
+}
+
+let mut uptime_seconds: u64 = 0;
+let mut uptime_ms: u64 = 0;
+
+fn rtc_read(reg: u8) -> u8 {
+    outb(0x70, reg);
+    return inb(0x71);
+}
+
+fn timer_update_uptime() {
+    uptime_ms = uptime_ms + 1;
+    if uptime_ms >= 1000 {
+        uptime_ms = 0;
+        uptime_seconds = uptime_seconds + 1;
+    }
+}
