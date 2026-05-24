@@ -11,7 +11,7 @@
 // GNU General Public License for more details.
 
 const OS_NAME: ptr<u8> = "W Kernel" as ptr<u8>;
-const SEC_CORE: ptr<u8> = "Kernel version 0.0.1 beta" as ptr<u8>;
+const SEC_CORE: ptr<u8> = "Kernel version 0.0.1 final" as ptr<u8>;
 
 const MB2_MAGIC: u32 = 0xE85250D6;
 const ARCH_X86_64: u32 = 0;
